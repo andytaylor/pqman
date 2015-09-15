@@ -16,8 +16,8 @@
  */
 package org.pqman.management.message;
 
-import org.pqman.management.api.Entity;
 import org.pqman.management.api.Operation;
+import org.pqman.management.transport.RequestResolver;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,31 +27,27 @@ import java.util.Map;
 /**
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
-public abstract class Request {
+public abstract class Request<T extends Response> {
     private final Operation operation;
 
     private final List<String> locales = new ArrayList<String>();
 
-   private final Entity entity;
+   private final String type;
 
    private final Map<String, Object> body;
 
    private Map<String,Object> additionalProperties = new HashMap<>();
 
-    public Request(Operation operation, Entity entity, Map<String, Object> body) {
-        this.operation = operation;
-       this.entity = entity;
+    public Request(Operation operation, String type, Map<String, Object> body) {
+       this.operation = operation;
+       this.type = type;
        this.body = body;
     }
 
-   abstract Response createResponse(String statusDescription, Map<String, Object> body, String type);
+   public abstract T createResponse(int statusCode, String statusDescription, RequestResolver resolver);
 
    public Operation getOperation() {
       return operation;
-   }
-
-   public Entity getEntity() {
-      return entity;
    }
 
    public Map<String, Object> getBody() {
@@ -60,5 +56,9 @@ public abstract class Request {
 
    public Map<String,Object> getAdditionalApplicationProperties() {
       return additionalProperties;
+   }
+
+   public String getType() {
+      return type;
    }
 }

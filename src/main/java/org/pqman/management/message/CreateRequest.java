@@ -16,24 +16,25 @@
  */
 package org.pqman.management.message;
 
-import org.pqman.management.api.Entity;
 import org.pqman.management.api.Operation;
+import org.pqman.management.transport.RequestResolver;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
-public class CreateRequest extends Request {
+public class CreateRequest extends Request<CreateResponse> {
 
-    public CreateRequest(Entity entity, Map<String, Object> body) {
-        super(Operation.CREATE, entity, body);
-        getAdditionalApplicationProperties().put("name", entity.getName());
+    public CreateRequest(String name, String type, Map<String, Object> body) {
+        super(Operation.CREATE, type, body);
+        getAdditionalApplicationProperties().put("name", name);
     }
 
     @Override
-    public Response createResponse(String statusDescription, Map<String, Object> body, String type) {
-        return new CreateResponse(statusDescription, body, type);
+    public CreateResponse createResponse(int statusCode, String statusDescription, RequestResolver resolver) {
+       Map<String, Object> replyBody = resolver.getBody();
+       String type = resolver.getApplicationProperty("type");
+       return new CreateResponse(statusCode, statusDescription, replyBody, type);
     }
 }

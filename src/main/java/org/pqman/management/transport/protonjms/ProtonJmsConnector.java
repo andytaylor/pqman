@@ -16,16 +16,13 @@
  */
 package org.pqman.management.transport.protonjms;
 
-import org.pqman.management.message.CreateRequest;
-import org.pqman.management.message.ErrorResponse;
-import org.pqman.management.message.Response;
+import org.pqman.management.message.*;
 import org.pqman.management.transport.Connector;
 
 import javax.jms.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -41,9 +38,9 @@ public class ProtonJmsConnector implements Connector {
       this.port = port;
    }
 
-   private Response connect(CreateRequest request) throws JMSException, NamingException {
+   private <T extends Response> T connect(Request<T> request) throws JMSException, NamingException, ResponseException {
 
-      Hashtable<Object, Object> env = new Hashtable();
+      Hashtable<Object, Object> env = new Hashtable<>();
       env.put("connectionfactory.myFactoryLookup", "amqp://" + host + ":" + port);
       env.put("java.naming.factory.initial", "org.apache.qpid.jms.jndi.JmsInitialContextFactory");
       env.put("queue.management", "$management");
@@ -65,11 +62,13 @@ public class ProtonJmsConnector implements Connector {
       MapMessage message = session.createMapMessage();
       message.setJMSReplyTo(reply);
       message.setStringProperty("operation", request.getOperation().toString());
-      message.setStringProperty("type", request.getEntity().getType());
+      message.setStringProperty("type", request.getType());
 
       Map<String, Object> body = request.getBody();
 
-      injectParams(message, body);
+      if (body != null) {
+         injectParams(message, body);
+      }
 
       Map<String, Object> properties = request.getAdditionalApplicationProperties();
 
@@ -79,21 +78,14 @@ public class ProtonJmsConnector implements Connector {
 
       ObjectMessage receive = (ObjectMessage) consumer.receive(5000);
 
-      long statusCode = receive.getLongProperty("statusCode");
+      int statusCode = (int) receive.getLongProperty("statusCode");
 
       String statusDescription = receive.getStringProperty("statusDescription");
 
-      Response response;
-      if (statusCode == 201) {
-         Map<String, Object> replyBody = (Map<String, Object>) receive.getObject();
-         String type = message.getStringProperty("type");
-         if (type == null) {
-            type = (String) replyBody.get("type");
-         }
-         response = request.createResponse(statusDescription, replyBody, type);
-      }
-      else {
-         response = new ErrorResponse((int) statusCode, statusDescription);
+      T response = request.createResponse(statusCode, statusDescription, new ProtonJmsRequestResolver(receive));
+
+      if (!response.isValidStatusCode(statusCode)) {
+         throw new ResponseException(response);
       }
 
       connection.close();
@@ -137,12 +129,11 @@ public class ProtonJmsConnector implements Connector {
          }
       }
 
-   public Response sendRequest(CreateRequest request) {
+   @Override
+   public <T extends Response> T sendRequest(Request<T> request) throws ResponseException {
       try {
          return connect(request);
-      } catch (JMSException e) {
-         e.printStackTrace();
-      } catch (NamingException e) {
+      } catch (JMSException | NamingException e) {
          e.printStackTrace();
       }
       return null;

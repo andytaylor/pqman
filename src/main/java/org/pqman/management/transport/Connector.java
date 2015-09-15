@@ -16,15 +16,13 @@
  */
 package org.pqman.management.transport;
 
-import org.pqman.management.message.CreateRequest;
+import org.pqman.management.message.Request;
 import org.pqman.management.message.Response;
-
-import javax.jms.JMSException;
-import javax.naming.NamingException;
+import org.pqman.management.message.ResponseException;
 
 /**
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
 public interface Connector {
-   Response sendRequest(CreateRequest request);
+   <T extends Response> T sendRequest(Request<T> request) throws ResponseException;
 }

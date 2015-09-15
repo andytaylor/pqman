@@ -16,9 +16,7 @@
  */
 package org.pqman.management.dispatch;
 
-import org.pqman.management.api.Entity;
-import org.pqman.management.message.CreateRequest;
-import org.pqman.management.message.Response;
+import org.pqman.management.message.*;
 import org.pqman.management.transport.Connector;
 
 import java.util.HashMap;
@@ -34,14 +32,14 @@ public class DispatchManager {
       this.connector = connector;
    }
 
-   public Response createListener(String name,
+   public CreateResponse createListener(String name,
                                   String addr,
                                   String port,
                                   boolean requireSsl,
                                   long maxFrameSize,
                                   boolean requireEncryption,
                                   String role,
-                                  boolean authenticatePeer) {
+                                  boolean authenticatePeer) throws ResponseException {
       Map<String, Object> body = new HashMap<>();
       body.put("addr", addr);
       body.put("port", port);
@@ -51,18 +49,16 @@ public class DispatchManager {
       body.put("role", role);
       body.put("authenticatePeer", authenticatePeer);
 
-      Entity entity = new Entity(name, null, "listener");
-
-      CreateRequest request = new CreateRequest(entity, body);
+      CreateRequest request = new CreateRequest(name, "listener", body);
       return connector.sendRequest(request);
 
    }
 
-   public Response createConnector(String name,
+   public CreateResponse createConnector(String name,
                                    String addr,
                                    String port,
                                    long maxFrameSize,
-                                   String role, boolean allowRedirect) {
+                                   String role, boolean allowRedirect) throws ResponseException {
       Map<String, Object> body = new HashMap<>();
       body.put("addr", addr);
       body.put("port", port);
@@ -70,10 +66,12 @@ public class DispatchManager {
       body.put("role", role);
       body.put("allowRedirect", allowRedirect);
 
-      Entity entity = new Entity(name, null, "connector");
-
-      CreateRequest request = new CreateRequest(entity, body);
+      CreateRequest request = new CreateRequest(name, "connector", body);
       return connector.sendRequest(request);
 
       }
+
+   public ReadResponse readConnector(String name) throws ResponseException {
+      return connector.sendRequest(new ReadRequest(name, null, "connector"));
+   }
 }

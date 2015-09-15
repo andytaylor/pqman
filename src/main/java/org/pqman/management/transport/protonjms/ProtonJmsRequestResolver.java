@@ -14,33 +14,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.pqman.management.message;
+package org.pqman.management.transport.protonjms;
 
+import org.pqman.management.transport.RequestResolver;
+
+import javax.jms.JMSException;
+import javax.jms.ObjectMessage;
 import java.util.Map;
 
 /**
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
-public class CreateResponse extends Response {
+public class ProtonJmsRequestResolver implements RequestResolver{
+   private final ObjectMessage message;
 
-    private Map<String, Object> body;
-    private final String type;
+   public ProtonJmsRequestResolver(ObjectMessage message) {
+      this.message = message;
+   }
 
-    public CreateResponse(int statusCode, String statusDescription, Map<String, Object> body, String type) {
-        super(statusCode, statusDescription);
-        this.body = body;
-        this.type = type;
-    }
+   @Override
+   public String getApplicationProperty(String key) {
+      try {
+         String value = message.getStringProperty(key);
+         if (value == null) {
+            value = (String) getBody().get(key);
+         }
+         return value;
+      } catch (JMSException e) {
+         return null;
+      }
+   }
 
-    public boolean isValidStatusCode(int statusCode) {
-        return statusCode == 201;
-    }
-
-    public Map<String, Object> getBody() {
-        return body;
-    }
-
-    public String getType() {
-        return type;
-    }
+   @Override
+   public Map<String, Object> getBody() {
+      try {
+         return (Map<String, Object>) message.getObject();
+      } catch (JMSException e) {
+         return null;
+      }
+   }
 }

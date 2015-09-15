@@ -16,31 +16,17 @@
  */
 package org.pqman.management.message;
 
-import java.util.Map;
-
 /**
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
-public class CreateResponse extends Response {
+public class ResponseException extends Exception {
+   private final Response response;
 
-    private Map<String, Object> body;
-    private final String type;
+   public ResponseException(Response response) {
+      this.response = response;
+   }
 
-    public CreateResponse(int statusCode, String statusDescription, Map<String, Object> body, String type) {
-        super(statusCode, statusDescription);
-        this.body = body;
-        this.type = type;
-    }
-
-    public boolean isValidStatusCode(int statusCode) {
-        return statusCode == 201;
-    }
-
-    public Map<String, Object> getBody() {
-        return body;
-    }
-
-    public String getType() {
-        return type;
-    }
+   public Response getResponse() {
+      return response;
+   }
 }

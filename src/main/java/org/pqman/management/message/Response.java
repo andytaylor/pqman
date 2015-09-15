@@ -19,7 +19,7 @@ package org.pqman.management.message;
 /**
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
-public class Response {
+public abstract class Response {
     private final int statusCode;
 
     private final String statusDescription;
@@ -28,4 +28,14 @@ public class Response {
         this.statusCode = statusCode;
         this.statusDescription = statusDescription;
     }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public String getStatusDescription() {
+        return statusDescription;
+    }
+
+    public abstract boolean isValidStatusCode(int statusCode);
 }

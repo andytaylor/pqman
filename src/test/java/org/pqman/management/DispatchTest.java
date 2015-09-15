@@ -16,11 +16,10 @@
  */
 package org.pqman.management;
 
+import junit.framework.Assert;
 import org.junit.Test;
 import org.pqman.management.dispatch.DispatchManager;
-import org.pqman.management.message.CreateResponse;
-import org.pqman.management.message.Response;
-import org.pqman.management.message.ErrorResponse;
+import org.pqman.management.message.*;
 import org.pqman.management.transport.protonjms.ProtonJmsConnectorFactory;
 
 import java.util.Map;
@@ -32,7 +31,7 @@ import static org.junit.Assert.*;
  */
 public class DispatchTest {
    @Test
-   public void createListener() {
+   public void createListener() throws ResponseException {
       String name="createListenerTest";
       boolean requireSsl=false;
       long maxFrameSize=65536;
@@ -43,7 +42,7 @@ public class DispatchTest {
       String addr="127.0.0.1";
       DispatchManager manager = new DispatchManager(new ProtonJmsConnectorFactory().createConnector("localhost", 5672));
       CreateResponse listener = (CreateResponse) manager.createListener(name, addr, port, requireSsl, maxFrameSize, requireEncryption, role, authenticatePeer);
-      assertEquals("listener", listener.getType());
+      assertEquals("org.apache.qpid.dispatch.listener", listener.getType());
       Map<String, Object> body = listener.getBody();
       assertEquals(name, body.get("name"));
       assertEquals(maxFrameSize, body.get("maxFrameSize"));
@@ -55,7 +54,7 @@ public class DispatchTest {
    }
 
    @Test
-   public void createListener2() {
+   public void createListener2() throws ResponseException {
       String name="createListenerTest2";
       boolean requireSsl=true;
       long maxFrameSize=55555;
@@ -66,7 +65,7 @@ public class DispatchTest {
       String addr="127.0.0.1";
       DispatchManager manager = new DispatchManager(new ProtonJmsConnectorFactory().createConnector("localhost", 5672));
       CreateResponse listener = (CreateResponse) manager.createListener(name, addr, port, requireSsl, maxFrameSize, requireEncryption, role, authenticatePeer);
-      assertEquals("listener", listener.getType());
+      assertEquals("org.apache.qpid.dispatch.listener", listener.getType());
       Map<String, Object> body = listener.getBody();
       assertEquals(name, body.get("name"));
       assertEquals(maxFrameSize, body.get("maxFrameSize"));
@@ -78,7 +77,7 @@ public class DispatchTest {
    }
 
    @Test
-   public void createSameListenerTwice() {
+   public void createSameListenerTwice() throws ResponseException {
       String name="createListenerTwiceTest";
       boolean requireSsl=false;
       long maxFrameSize=65536;
@@ -89,12 +88,16 @@ public class DispatchTest {
       String addr="127.0.0.1";
       DispatchManager manager = new DispatchManager(new ProtonJmsConnectorFactory().createConnector("localhost", 5672));
       manager.createListener(name, addr, port, requireSsl, maxFrameSize, requireEncryption, role, authenticatePeer);
-      Response error = manager.createListener(name, addr, port, requireSsl, maxFrameSize, requireEncryption, role, authenticatePeer);
-      assertTrue(error instanceof ErrorResponse);
+      try {
+         Response error = manager.createListener(name, addr, port, requireSsl, maxFrameSize, requireEncryption, role, authenticatePeer);
+         Assert.fail("should throw exception");
+      } catch (ResponseException e) {
+         assertEquals(400, e.getResponse().getStatusCode());
+      }
    }
 
    @Test
-   public void createConnector() {
+   public void createConnector() throws ResponseException {
       String name="createConnectorTest";
       long maxFrameSize=65536;
       String role="normal";
@@ -103,7 +106,7 @@ public class DispatchTest {
       boolean allowRedirect = true;
       DispatchManager manager = new DispatchManager(new ProtonJmsConnectorFactory().createConnector("localhost", 5672));
       CreateResponse connector = (CreateResponse) manager.createConnector(name, addr, port, maxFrameSize, role, allowRedirect);
-      assertEquals("connector", connector.getType());
+      assertEquals("org.apache.qpid.dispatch.connector", connector.getType());
       Map<String, Object> body = connector.getBody();
       System.out.println("body = " + body);
       assertEquals(name, body.get("name"));
@@ -111,5 +114,25 @@ public class DispatchTest {
       assertEquals(role, body.get("role"));
       assertEquals(port, body.get("port"));
       assertEquals(addr, body.get("addr"));
+   }
+
+   @Test
+   public void readConnector() throws ResponseException {
+      String name="createConnectorTest";
+      long maxFrameSize=65536;
+      String role="normal";
+      String port="amqp";
+      String addr="127.0.0.1";
+      boolean allowRedirect = true;
+      DispatchManager manager = new DispatchManager(new ProtonJmsConnectorFactory().createConnector("localhost", 5672));
+      ReadResponse connector = manager.readConnector(name);
+      Map<String, Object> body = connector.getBody();
+      System.out.println("body = " + body);
+      assertEquals(name, body.get("name"));
+      assertEquals(maxFrameSize, body.get("maxFrameSize"));
+      assertEquals(role, body.get("role"));
+      assertEquals(port, body.get("port"));
+      assertEquals(addr, body.get("addr"));
+      assertEquals(allowRedirect, body.get("allowRedirect"));
    }
 }

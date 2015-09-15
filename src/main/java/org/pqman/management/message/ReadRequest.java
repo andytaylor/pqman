@@ -14,29 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.pqman.management.api;
+package org.pqman.management.message;
+
+import org.pqman.management.api.Operation;
+import org.pqman.management.transport.RequestResolver;
 
 /**
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
-public class Entity {
-    private final String name;
+public class ReadRequest extends Request<ReadResponse> {
+   public ReadRequest(String name, String identity, String type) {
+      super(Operation.READ, type, null);
+      if (name != null) {
+         getAdditionalApplicationProperties().put("name", name);
+      } else if (identity != null) {
+         getAdditionalApplicationProperties().put("identity", identity);
+      }
+   }
 
-    private final String identity;
-
-    private final String type;
-
-    public Entity(String name, String identity, String type) {
-        this.name = name;
-        this.identity = identity;
-        this.type = type;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getName() {
-        return name;
-    }
+   @Override
+   public ReadResponse createResponse(int statusCode, String statusDescription, RequestResolver resolver) {
+      return new ReadResponse(statusCode, statusDescription, resolver.getBody());
+   }
 }

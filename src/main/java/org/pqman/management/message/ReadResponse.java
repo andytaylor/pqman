@@ -16,11 +16,23 @@
  */
 package org.pqman.management.message;
 
+import java.util.Map;
+
 /**
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
-public class ErrorResponse extends Response {
-   public ErrorResponse(int statusCode, String statusDescription) {
+public class ReadResponse extends Response {
+   private Map<String, Object> body;
+   public ReadResponse(int statusCode, String statusDescription, Map<String, Object> body) {
       super(statusCode, statusDescription);
+      this.body = body;
+   }
+   @Override
+   public boolean isValidStatusCode(int statusCode) {
+      return statusCode == 200;
+   }
+
+   public Map<String, Object> getBody() {
+       return body;
    }
 }

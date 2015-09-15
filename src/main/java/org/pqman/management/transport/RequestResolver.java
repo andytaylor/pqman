@@ -14,33 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.pqman.management.message;
+package org.pqman.management.transport;
 
 import java.util.Map;
 
 /**
  * @author <a href="mailto:andy.taylor@jboss.org">Andy Taylor</a>
  */
-public class CreateResponse extends Response {
+public interface RequestResolver {
+   String getApplicationProperty(String key);
 
-    private Map<String, Object> body;
-    private final String type;
-
-    public CreateResponse(int statusCode, String statusDescription, Map<String, Object> body, String type) {
-        super(statusCode, statusDescription);
-        this.body = body;
-        this.type = type;
-    }
-
-    public boolean isValidStatusCode(int statusCode) {
-        return statusCode == 201;
-    }
-
-    public Map<String, Object> getBody() {
-        return body;
-    }
-
-    public String getType() {
-        return type;
-    }
+   Map<String, Object> getBody();
 }
